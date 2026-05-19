@@ -463,57 +463,19 @@
     <!-- Main content -->
     <div class="content">
       <div class="hero">
-        <h1>RawGit Local</h1>
-        <p>
+        <h1>Local Code</h1>
+        <!-- <p>
           Serve raw files from GitHub, GitLab, Bitbucket, Gitea, and Codeberg
           with proper MIME types and caching.
-        </p>
+        </p> -->
       </div>
 
       <div class="input-card">
-        <label>Paste a GitHub file URL</label>
         <div class="input-row">
-          <input
-            type="text"
-            id="inputText"
-            placeholder="https://github.com/user/repo/blob/branch/path.js"
-          />
+          <input type="text" id="inputText" />
           <button onclick="handleSubmit()">→ Serve</button>
         </div>
       </div>
-
-      <h2>Endpoints</h2>
-      <div class="endpoints">
-        <div class="endpoint">
-          <span class="badge dev">Dev</span>
-          <h3>Short Cache</h3>
-          <pre>/dev/{hosting}/user/repo/ref/path</pre>
-          <p>Example: <code>/dev/github/owner/repo/main/file.js</code></p>
-        </div>
-        <div class="endpoint">
-          <span class="badge cdn">CDN</span>
-          <h3>Permanent Cache</h3>
-          <pre>/cdn/{hosting}/user/repo/ref/path</pre>
-          <p>Example: <code>/cdn/github/owner/repo/v1.0.0/file.js</code></p>
-        </div>
-        <div class="endpoint">
-          <span class="badge bare">Bare</span>
-          <h3>GitHub Default</h3>
-          <pre>/user/repo/ref/path</pre>
-          <p>Example: <code>/owner/repo/main/file.js</code></p>
-        </div>
-      </div>
-
-      <h2>Supported Hostings</h2>
-      <div class="hostings">
-        <span>github</span>
-        <span>gitlab</span>
-        <span>bitbucket</span>
-        <span>gitea</span>
-        <span>codeberg</span>
-      </div>
-
-      <div class="footer">Running on nginx with proxy caching</div>
     </div>
 
     <script>
