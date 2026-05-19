@@ -3,6 +3,9 @@ FROM nginx:alpine
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Copy index.html to nginx html root
+COPY index.html /usr/share/nginx/html/index.html
+
 # Patch paths for the container environment
 # 1. Set absolute root for default HTML files
 # 2. Set absolute path for the proxy cache directory

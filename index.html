@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RawGit Local</title>
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        line-height: 1.6;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        color: #333;
+      }
+      h1 {
+        color: #2c3e50;
+      }
+      code {
+        background: #f4f4f4;
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        font-family:
+          "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      }
+      pre {
+        background: #f4f4f4;
+        padding: 1rem;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+      .endpoint {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        border-left: 4px solid #3498db;
+        background: #f9f9f9;
+      }
+      .endpoint h3 {
+        margin-top: 0;
+      }
+      .form-group {
+        margin: 1.5rem 0;
+      }
+      input[type="text"] {
+        padding: 0.5rem;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 60%;
+      }
+      button {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border: none;
+        border-radius: 4px;
+        background-color: #3498db;
+        color: #fff;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #2980b9;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>RawGit Local</h1>
+    <p>
+      Serve raw files from GitHub, GitLab, Bitbucket, Gitea, and Codeberg with
+      proper MIME types and caching.
+    </p>
+
+    <div class="form-group">
+      <input type="text" id="inputText" placeholder="Enter URL path..." />
+      <button onclick="handleSubmit()">Submit</button>
+    </div>
+
+    <h2>Endpoints</h2>
+
+    <div class="endpoint">
+      <h3>Development (short cache)</h3>
+      <pre>/dev/{hosting}/user/repo/ref/path</pre>
+      <p>Example: <code>/dev/github/owner/repo/main/file.js</code></p>
+    </div>
+
+    <div class="endpoint">
+      <h3>Production / CDN (permanent cache)</h3>
+      <pre>/cdn/{hosting}/user/repo/ref/path</pre>
+      <p>Example: <code>/cdn/github/owner/repo/v1.0.0/file.js</code></p>
+    </div>
+
+    <div class="endpoint">
+      <h3>Bare GitHub (defaults to GitHub dev cache)</h3>
+      <pre>/user/repo/ref/path</pre>
+      <p>Example: <code>/owner/repo/main/file.js</code></p>
+    </div>
+
+    <h2>Supported Hostings</h2>
+    <ul>
+      <li><code>github</code></li>
+      <li><code>gitlab</code></li>
+      <li><code>bitbucket</code></li>
+      <li><code>gitea</code></li>
+      <li><code>codeberg</code></li>
+    </ul>
+
+    <p style="margin-top: 2rem; color: #666; font-size: 0.9rem">
+      Running on nginx with proxy caching.
+    </p>
+
+    <script>
+      function handleSubmit() {
+        const raw = document.getElementById("inputText").value.trim();
+        let localPath = raw;
+
+        // Convert https://github.com/user/repo/blob/branch/path
+        // to /user/repo/branch/path
+        if (raw.startsWith("https://github.com/")) {
+          localPath = raw
+            .replace("https://github.com", "") // remove origin prefix
+            .replace("/blob/", "/"); // remove /blob/ segment
+        }
+
+        console.log("Local path:", localPath);
+        window.location.href = localPath;
+      }
+    </script>
+  </body>
+</html>
