@@ -5,113 +5,522 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RawGit Local</title>
     <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
       body {
         font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-          Arial, sans-serif;
-        line-height: 1.6;
-        max-width: 800px;
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        min-height: 100vh;
+        color: #e0e6ed;
+        overflow-x: hidden;
+        background: #0a0e17;
+      }
+
+      /* ── Animated vector background ── */
+      .bg-vectors {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+      }
+      .bg-vectors svg {
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        top: -50%;
+        left: -50%;
+        animation: rotateMesh 60s linear infinite;
+      }
+      @keyframes rotateMesh {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .floating-shape {
+        position: absolute;
+        border: 1px solid rgba(56, 189, 248, 0.12);
+        border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        animation: morphFloat 12s ease-in-out infinite alternate;
+      }
+      .floating-shape:nth-child(1) {
+        width: 420px;
+        height: 420px;
+        top: 5%;
+        left: 10%;
+        animation-duration: 14s;
+        border-color: rgba(56, 189, 248, 0.08);
+        background: radial-gradient(
+          circle,
+          rgba(56, 189, 248, 0.04) 0%,
+          transparent 70%
+        );
+      }
+      .floating-shape:nth-child(2) {
+        width: 320px;
+        height: 320px;
+        top: 55%;
+        right: 8%;
+        animation-duration: 18s;
+        animation-delay: -4s;
+        border-color: rgba(168, 85, 247, 0.1);
+        background: radial-gradient(
+          circle,
+          rgba(168, 85, 247, 0.04) 0%,
+          transparent 70%
+        );
+      }
+      .floating-shape:nth-child(3) {
+        width: 260px;
+        height: 260px;
+        bottom: 10%;
+        left: 30%;
+        animation-duration: 16s;
+        animation-delay: -8s;
+        border-color: rgba(52, 211, 153, 0.08);
+        background: radial-gradient(
+          circle,
+          rgba(52, 211, 153, 0.04) 0%,
+          transparent 70%
+        );
+      }
+      @keyframes morphFloat {
+        0% {
+          border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+          transform: rotate(0deg) translateY(0);
+        }
+        50% {
+          border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%;
+          transform: rotate(180deg) translateY(-30px);
+        }
+        100% {
+          border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+          transform: rotate(360deg) translateY(0);
+        }
+      }
+
+      /* Grid lines */
+      .grid-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background-image:
+          linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+        background-size: 60px 60px;
+        animation: gridShift 20s linear infinite;
+      }
+      @keyframes gridShift {
+        from {
+          background-position: 0 0;
+        }
+        to {
+          background-position: 60px 60px;
+        }
+      }
+
+      /* ── Content ── */
+      .content {
+        position: relative;
+        z-index: 1;
+        max-width: 900px;
         margin: 0 auto;
-        padding: 2rem;
-        color: #333;
+        padding: 3rem 2rem;
       }
-      h1 {
-        color: #2c3e50;
+
+      /* Hero */
+      .hero {
+        text-align: center;
+        margin-bottom: 3rem;
       }
-      code {
-        background: #f4f4f4;
-        padding: 0.2rem 0.4rem;
-        border-radius: 3px;
+      .hero h1 {
+        font-size: 2.8rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #38bdf8, #a78bfa, #34d399);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.02em;
+      }
+      .hero p {
+        font-size: 1.1rem;
+        color: #94a3b8;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.7;
+      }
+
+      /* Input card */
+      .input-card {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(56, 189, 248, 0.15);
+        border-radius: 16px;
+        padding: 1.75rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 0 40px rgba(56, 189, 248, 0.06);
+        transition:
+          border-color 0.3s,
+          box-shadow 0.3s;
+      }
+      .input-card:hover {
+        border-color: rgba(56, 189, 248, 0.3);
+        box-shadow: 0 0 60px rgba(56, 189, 248, 0.1);
+      }
+      .input-card label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #38bdf8;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.75rem;
+      }
+      .input-row {
+        display: flex;
+        gap: 0.75rem;
+      }
+      .input-row input[type="text"] {
+        flex: 1;
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem;
         font-family:
           "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 10px;
+        color: #e2e8f0;
+        outline: none;
+        transition:
+          border-color 0.3s,
+          box-shadow 0.3s;
       }
-      pre {
-        background: #f4f4f4;
-        padding: 1rem;
-        border-radius: 5px;
-        overflow-x: auto;
+      .input-row input[type="text"]:focus {
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+      }
+      .input-row input[type="text"]::placeholder {
+        color: #475569;
+      }
+      .input-row button {
+        padding: 0.85rem 1.75rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #38bdf8, #818cf8);
+        color: #0f172a;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        white-space: nowrap;
+      }
+      .input-row button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 24px rgba(56, 189, 248, 0.35);
+      }
+      .input-row button:active {
+        transform: translateY(0);
+      }
+
+      /* Section headings */
+      h2 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      }
+
+      /* Endpoint cards */
+      .endpoints {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2.5rem;
       }
       .endpoint {
-        margin: 1.5rem 0;
-        padding: 1rem;
-        border-left: 4px solid #3498db;
-        background: #f9f9f9;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        border-radius: 12px;
+        padding: 1.25rem;
+        transition:
+          border-color 0.3s,
+          transform 0.2s;
+      }
+      .endpoint:hover {
+        border-color: rgba(56, 189, 248, 0.3);
+        transform: translateY(-2px);
+      }
+      .endpoint .badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        margin-bottom: 0.75rem;
+      }
+      .badge.dev {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+      }
+      .badge.cdn {
+        background: rgba(52, 211, 153, 0.15);
+        color: #34d399;
+      }
+      .badge.bare {
+        background: rgba(168, 85, 247, 0.15);
+        color: #a855f7;
       }
       .endpoint h3 {
-        margin-top: 0;
-      }
-      .form-group {
-        margin: 1.5rem 0;
-      }
-      input[type="text"] {
-        padding: 0.5rem;
         font-size: 1rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        width: 60%;
+        font-weight: 600;
+        color: #e2e8f0;
+        margin-bottom: 0.5rem;
       }
-      button {
-        padding: 0.5rem 1rem;
-        font-size: 1rem;
-        border: none;
-        border-radius: 4px;
-        background-color: #3498db;
-        color: #fff;
-        cursor: pointer;
+      .endpoint pre {
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(148, 163, 184, 0.08);
+        border-radius: 8px;
+        padding: 0.6rem 0.8rem;
+        font-size: 0.82rem;
+        color: #38bdf8;
+        overflow-x: auto;
+        margin-bottom: 0.5rem;
       }
-      button:hover {
-        background-color: #2980b9;
+      .endpoint p {
+        font-size: 0.85rem;
+        color: #94a3b8;
+      }
+      .endpoint code {
+        background: rgba(56, 189, 248, 0.08);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.82rem;
+        color: #7dd3fc;
+      }
+
+      /* Hosting tags */
+      .hostings {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 2.5rem;
+      }
+      .hostings span {
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 8px;
+        padding: 0.45rem 0.9rem;
+        font-size: 0.85rem;
+        font-family:
+          "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        color: #94a3b8;
+        transition:
+          border-color 0.3s,
+          color 0.3s;
+      }
+      .hostings span:hover {
+        border-color: rgba(56, 189, 248, 0.3);
+        color: #e2e8f0;
+      }
+
+      /* Footer */
+      .footer {
+        text-align: center;
+        color: #475569;
+        font-size: 0.85rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(148, 163, 184, 0.08);
+      }
+
+      /* Responsive */
+      @media (max-width: 600px) {
+        .hero h1 {
+          font-size: 2rem;
+        }
+        .input-row {
+          flex-direction: column;
+        }
+        .input-row button {
+          width: 100%;
+        }
+        .content {
+          padding: 2rem 1rem;
+        }
       }
     </style>
   </head>
   <body>
-    <h1>RawGit Local</h1>
-    <p>
-      Serve raw files from GitHub, GitLab, Bitbucket, Gitea, and Codeberg with
-      proper MIME types and caching.
-    </p>
-
-    <div class="form-group">
-      <input type="text" id="inputText" placeholder="Enter URL path..." />
-      <button onclick="handleSubmit()">Submit</button>
+    <!-- Animated vector background -->
+    <div class="bg-vectors">
+      <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="rgba(56,189,248,0.06)" />
+            <stop offset="100%" stop-color="rgba(168,85,247,0.03)" />
+          </linearGradient>
+        </defs>
+        <circle
+          cx="400"
+          cy="400"
+          r="300"
+          fill="none"
+          stroke="rgba(56,189,248,0.06)"
+          stroke-width="0.5"
+        />
+        <circle
+          cx="400"
+          cy="400"
+          r="200"
+          fill="none"
+          stroke="rgba(168,85,247,0.05)"
+          stroke-width="0.5"
+        />
+        <circle
+          cx="400"
+          cy="400"
+          r="100"
+          fill="none"
+          stroke="rgba(52,211,153,0.04)"
+          stroke-width="0.5"
+        />
+        <line
+          x1="100"
+          y1="100"
+          x2="700"
+          y2="700"
+          stroke="rgba(56,189,248,0.04)"
+          stroke-width="0.5"
+        />
+        <line
+          x1="700"
+          y1="100"
+          x2="100"
+          y2="700"
+          stroke="rgba(168,85,247,0.04)"
+          stroke-width="0.5"
+        />
+        <line
+          x1="400"
+          y1="50"
+          x2="400"
+          y2="750"
+          stroke="rgba(52,211,153,0.03)"
+          stroke-width="0.5"
+        />
+        <line
+          x1="50"
+          y1="400"
+          x2="750"
+          y2="400"
+          stroke="rgba(56,189,248,0.03)"
+          stroke-width="0.5"
+        />
+        <polygon
+          points="400,150 550,500 250,500"
+          fill="none"
+          stroke="rgba(56,189,248,0.04)"
+          stroke-width="0.5"
+        />
+        <polygon
+          points="400,250 500,450 300,450"
+          fill="url(#g1)"
+          stroke="rgba(168,85,247,0.04)"
+          stroke-width="0.5"
+        />
+      </svg>
+      <div class="floating-shape"></div>
+      <div class="floating-shape"></div>
+      <div class="floating-shape"></div>
     </div>
+    <div class="grid-overlay"></div>
 
-    <h2>Endpoints</h2>
+    <!-- Main content -->
+    <div class="content">
+      <div class="hero">
+        <h1>RawGit Local</h1>
+        <p>
+          Serve raw files from GitHub, GitLab, Bitbucket, Gitea, and Codeberg
+          with proper MIME types and caching.
+        </p>
+      </div>
 
-    <div class="endpoint">
-      <h3>Development (short cache)</h3>
-      <pre>/dev/{hosting}/user/repo/ref/path</pre>
-      <p>Example: <code>/dev/github/owner/repo/main/file.js</code></p>
+      <div class="input-card">
+        <label>Paste a GitHub file URL</label>
+        <div class="input-row">
+          <input
+            type="text"
+            id="inputText"
+            placeholder="https://github.com/user/repo/blob/branch/path.js"
+          />
+          <button onclick="handleSubmit()">→ Serve</button>
+        </div>
+      </div>
+
+      <h2>Endpoints</h2>
+      <div class="endpoints">
+        <div class="endpoint">
+          <span class="badge dev">Dev</span>
+          <h3>Short Cache</h3>
+          <pre>/dev/{hosting}/user/repo/ref/path</pre>
+          <p>Example: <code>/dev/github/owner/repo/main/file.js</code></p>
+        </div>
+        <div class="endpoint">
+          <span class="badge cdn">CDN</span>
+          <h3>Permanent Cache</h3>
+          <pre>/cdn/{hosting}/user/repo/ref/path</pre>
+          <p>Example: <code>/cdn/github/owner/repo/v1.0.0/file.js</code></p>
+        </div>
+        <div class="endpoint">
+          <span class="badge bare">Bare</span>
+          <h3>GitHub Default</h3>
+          <pre>/user/repo/ref/path</pre>
+          <p>Example: <code>/owner/repo/main/file.js</code></p>
+        </div>
+      </div>
+
+      <h2>Supported Hostings</h2>
+      <div class="hostings">
+        <span>github</span>
+        <span>gitlab</span>
+        <span>bitbucket</span>
+        <span>gitea</span>
+        <span>codeberg</span>
+      </div>
+
+      <div class="footer">Running on nginx with proxy caching</div>
     </div>
-
-    <div class="endpoint">
-      <h3>Production / CDN (permanent cache)</h3>
-      <pre>/cdn/{hosting}/user/repo/ref/path</pre>
-      <p>Example: <code>/cdn/github/owner/repo/v1.0.0/file.js</code></p>
-    </div>
-
-    <div class="endpoint">
-      <h3>Bare GitHub (defaults to GitHub dev cache)</h3>
-      <pre>/user/repo/ref/path</pre>
-      <p>Example: <code>/owner/repo/main/file.js</code></p>
-    </div>
-
-    <h2>Supported Hostings</h2>
-    <ul>
-      <li><code>github</code></li>
-      <li><code>gitlab</code></li>
-      <li><code>bitbucket</code></li>
-      <li><code>gitea</code></li>
-      <li><code>codeberg</code></li>
-    </ul>
-
-    <p style="margin-top: 2rem; color: #666; font-size: 0.9rem">
-      Running on nginx with proxy caching.
-    </p>
 
     <script>
       function handleSubmit() {
         const raw = document.getElementById("inputText").value.trim();
+        if (!raw) return;
+
         let localPath = raw;
 
         // Convert https://github.com/user/repo/blob/branch/path
@@ -125,6 +534,13 @@
         console.log("Local path:", localPath);
         window.location.href = localPath;
       }
+
+      // Allow Enter key to submit
+      document
+        .getElementById("inputText")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") handleSubmit();
+        });
     </script>
   </body>
 </html>
