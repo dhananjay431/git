@@ -4,7 +4,7 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy index.html to nginx html root
-COPY index.html /usr/share/nginx/html/index.html
+COPY index.html /etc/nginx/html/index.html
 
 # Patch paths for the container environment
 # 1. Set absolute root for default HTML files
