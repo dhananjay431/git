@@ -3,8 +3,9 @@ FROM nginx:alpine
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy index.html to nginx html root
+# Copy index.html and md-viewer.html to nginx html root
 COPY index.html /etc/nginx/html/index.html
+COPY md-viewer.html /etc/nginx/html/md-viewer.html
 
 # Patch paths for the container environment
 # 1. Set absolute root for default HTML files

@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Markdown Viewer</title>
+
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- highlight.js for code syntax highlighting -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <!-- Mermaid.js for diagram rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        min-height: 100vh;
+        color: #e0e6ed;
+        background: #0a0e17;
+        line-height: 1.7;
+      }
+
+      /* Loading spinner */
+      .loader {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        gap: 1rem;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(56, 189, 248, 0.15);
+        border-top-color: #38bdf8;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .loader-text {
+        color: #94a3b8;
+        font-size: 0.95rem;
+      }
+
+      /* Error state */
+      .error-box {
+        max-width: 800px;
+        margin: 4rem auto;
+        padding: 2rem;
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        border-radius: 12px;
+        text-align: center;
+      }
+      .error-box h2 {
+        color: #f87171;
+        margin-bottom: 0.75rem;
+        font-size: 1.3rem;
+      }
+      .error-box p {
+        color: #94a3b8;
+        font-size: 0.95rem;
+        word-break: break-all;
+      }
+      .error-box a {
+        color: #38bdf8;
+        text-decoration: none;
+      }
+      .error-box a:hover {
+        text-decoration: underline;
+      }
+
+      /* Markdown content area */
+      .md-content {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2.5rem 2rem;
+      }
+
+      /* Header bar */
+      .md-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      }
+      .md-header .icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 8px;
+        font-size: 1rem;
+      }
+      .md-header .info {
+        flex: 1;
+        min-width: 0;
+      }
+      .md-header .info h1 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .md-header .info .meta {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-top: 2px;
+      }
+      .md-header .meta a {
+        color: #38bdf8;
+        text-decoration: none;
+      }
+      .md-header .meta a:hover {
+        text-decoration: underline;
+      }
+      .md-header .actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .md-header .actions a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.45rem 0.9rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-radius: 8px;
+        text-decoration: none;
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        background: rgba(15, 23, 42, 0.6);
+        color: #94a3b8;
+        transition: all 0.2s;
+      }
+      .md-header .actions a:hover {
+        border-color: rgba(56, 189, 248, 0.4);
+        color: #e2e8f0;
+        background: rgba(56, 189, 248, 0.08);
+      }
+
+      /* ── Markdown body styles ── */
+      .md-body h1 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #f1f5f9;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        line-height: 1.3;
+      }
+      .md-body h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        margin-top: 1.75rem;
+        margin-bottom: 0.6rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      }
+      .md-body h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #cbd5e1;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .md-body h4,
+      .md-body h5,
+      .md-body h6 {
+        color: #cbd5e1;
+        margin-top: 1.25rem;
+        margin-bottom: 0.4rem;
+      }
+      .md-body h4 {
+        font-size: 1.1rem;
+      }
+      .md-body h5 {
+        font-size: 1rem;
+      }
+      .md-body h6 {
+        font-size: 0.9rem;
+        color: #94a3b8;
+      }
+
+      .md-body p {
+        margin-bottom: 1rem;
+        color: #c9d1d9;
+      }
+
+      .md-body a {
+        color: #38bdf8;
+        text-decoration: none;
+      }
+      .md-body a:hover {
+        text-decoration: underline;
+      }
+
+      .md-body strong {
+        color: #f1f5f9;
+      }
+      .md-body em {
+        color: #cbd5e1;
+      }
+
+      .md-body ul,
+      .md-body ol {
+        margin-bottom: 1rem;
+        padding-left: 1.75rem;
+        color: #c9d1d9;
+      }
+      .md-body li {
+        margin-bottom: 0.35rem;
+      }
+      .md-body li > ul,
+      .md-body li > ol {
+        margin-bottom: 0;
+        margin-top: 0.35rem;
+      }
+
+      .md-body blockquote {
+        margin: 1rem 0;
+        padding: 0.75rem 1rem;
+        border-left: 3px solid rgba(56, 189, 248, 0.4);
+        background: rgba(56, 189, 248, 0.04);
+        border-radius: 0 8px 8px 0;
+        color: #94a3b8;
+      }
+      .md-body blockquote p:last-child {
+        margin-bottom: 0;
+      }
+
+      .md-body code {
+        background: rgba(56, 189, 248, 0.08);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.88em;
+        color: #7dd3fc;
+        font-family:
+          "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      }
+
+      .md-body pre {
+        background: #0d1117;
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        border-radius: 10px;
+        padding: 1rem;
+        overflow-x: auto;
+        margin: 1rem 0;
+        position: relative;
+      }
+      .md-body pre code {
+        background: none;
+        padding: 0;
+        color: #e2e8f0;
+        font-size: 0.85rem;
+        line-height: 1.6;
+      }
+
+      /* Copy button on code blocks */
+      .md-body pre .copy-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: rgba(148, 163, 184, 0.1);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        border-radius: 6px;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.72rem;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+      .md-body pre .copy-btn:hover {
+        background: rgba(56, 189, 248, 0.15);
+        border-color: rgba(56, 189, 248, 0.3);
+        color: #38bdf8;
+      }
+
+      .md-body table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+      }
+      .md-body thead th {
+        background: rgba(56, 189, 248, 0.08);
+        color: #e2e8f0;
+        font-weight: 600;
+        text-align: left;
+        padding: 0.65rem 0.9rem;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+      }
+      .md-body tbody td {
+        padding: 0.55rem 0.9rem;
+        border: 1px solid rgba(148, 163, 184, 0.08);
+        color: #c9d1d9;
+      }
+      .md-body tbody tr:nth-child(even) {
+        background: rgba(15, 23, 42, 0.4);
+      }
+      .md-body tbody tr:hover {
+        background: rgba(56, 189, 248, 0.04);
+      }
+
+      .md-body hr {
+        border: none;
+        height: 1px;
+        background: rgba(148, 163, 184, 0.12);
+        margin: 2rem 0;
+      }
+
+      .md-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 0.75rem 0;
+      }
+
+      .md-body input[type="checkbox"] {
+        margin-right: 0.4rem;
+        accent-color: #38bdf8;
+      }
+
+      /* Mermaid diagram container */
+      .md-body .mermaid-diagram {
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin: 1rem 0;
+        text-align: center;
+        overflow-x: auto;
+      }
+      .md-body .mermaid-diagram .diagram-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+      }
+
+      /* Task list items */
+      .md-body .task-list-item {
+        list-style: none;
+        margin-left: -1.75rem;
+      }
+
+      /* Responsive */
+      @media (max-width: 600px) {
+        .md-content {
+          padding: 1.5rem 1rem;
+        }
+        .md-body h1 {
+          font-size: 1.5rem;
+        }
+        .md-body h2 {
+          font-size: 1.25rem;
+        }
+        .md-header {
+          flex-wrap: wrap;
+        }
+        .md-header .actions {
+          width: 100%;
+        }
+        .md-header .actions a {
+          flex: 1;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Loading markdown…</div>
+      </div>
+    </div>
+
+    <script>
+      // ── Initialize Mermaid ──
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: "dark",
+        themeVariables: {
+          primaryColor: "#1e293b",
+          primaryBorderColor: "#38bdf8",
+          primaryTextColor: "#e2e8f0",
+          lineColor: "#64748b",
+          secondaryColor: "#0f172a",
+          tertiaryColor: "#1e293b",
+          fontFamily: "Inter, -apple-system, sans-serif",
+          fontSize: "14px",
+        },
+        flowchart: { htmlLabels: true, curve: "basis" },
+        sequence: { actorMargin: 80, mirrorActors: false },
+        logLevel: "error",
+      });
+
+      // ── Utilities ──
+      function parsePath(pathname) {
+        // Handles three URL formats:
+        //   /user/repo/branch/path/to/file.md           (bare GitHub)
+        //   /dev/github/user/repo/branch/path/to/file.md (dev)
+        //   /cdn/github/user/repo/branch/path/to/file.md (cdn)
+        var path = pathname;
+        // Strip /dev/{host} or /cdn/{host} prefix
+        path = path.replace(
+          /^\/(?:dev|cdn)\/(?:github|gitlab|bitbucket|gitea|codeberg)\//,
+          "/",
+        );
+        var parts = path.split("/").filter(Boolean);
+        if (parts.length < 4) return null;
+        return {
+          user: parts[0],
+          repo: parts[1],
+          ref: parts[2],
+          filePath: parts.slice(3).join("/"),
+        };
+      }
+
+      function buildRawUrl(pathname) {
+        var parsed = parsePath(pathname);
+        if (!parsed) return null;
+        return (
+          "https://raw.githubusercontent.com/" +
+          parsed.user +
+          "/" +
+          parsed.repo +
+          "/" +
+          parsed.ref +
+          "/" +
+          parsed.filePath
+        );
+      }
+
+      function buildSourceUrl(pathname) {
+        var parsed = parsePath(pathname);
+        if (!parsed) return null;
+        return (
+          "https://github.com/" +
+          parsed.user +
+          "/" +
+          parsed.repo +
+          "/blob/" +
+          parsed.ref +
+          "/" +
+          parsed.filePath
+        );
+      }
+
+      // ── Markdown renderer config ──
+      var renderer = new marked.Renderer();
+
+      var mermaidCounter = 0;
+
+      // Override code block handler to detect mermaid diagrams
+      renderer.code = function (code, language) {
+        // Handle marked v14+ where code object may be passed
+        if (typeof code === "object") {
+          language = code.lang;
+          code = code.text;
+        }
+        if (language === "mermaid") {
+          var id = "mermaid-diagram-" + ++mermaidCounter;
+          return (
+            '<div class="mermaid-diagram" id="' +
+            id +
+            '">' +
+            '<div class="diagram-label">Diagram</div>' +
+            '<pre class="mermaid">' +
+            code +
+            "</pre>" +
+            "</div>"
+          );
+        }
+        // Regular code block with syntax highlighting
+        var highlighted;
+        if (language && hljs.getLanguage(language)) {
+          try {
+            highlighted = hljs.highlight(code, { language: language }).value;
+          } catch (e) {
+            highlighted = escapeHtml(code);
+          }
+        } else {
+          highlighted = escapeHtml(code);
+        }
+        var langClass = language || "plaintext";
+        return (
+          '<pre><code class="hljs language-' +
+          langClass +
+          '">' +
+          highlighted +
+          '</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>'
+        );
+      };
+
+      renderer.checkbox = function (checked) {
+        return (
+          '<input type="checkbox"' +
+          (checked ? " checked" : "") +
+          " disabled />"
+        );
+      };
+
+      renderer.listitem = function (text) {
+        if (text.indexOf("checkbox") !== -1) {
+          return '<li class="task-list-item">' + text + "</li>";
+        }
+        return "<li>" + text + "</li>";
+      };
+
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, "\x26amp;")
+          .replace(/</g, "\x26lt;")
+          .replace(/>/g, "\x26gt;")
+          .replace(/"/g, "\x26quot;")
+          .replace(/'/g, "\x26#039;");
+      }
+
+      function copyCode(btn) {
+        var code = btn.previousElementSibling.textContent;
+        navigator.clipboard.writeText(code).then(function () {
+          btn.textContent = "Copied!";
+          setTimeout(function () {
+            btn.textContent = "Copy";
+          }, 2000);
+        });
+      }
+
+      // ── Main ──
+      async function main() {
+        var currentPath = window.location.pathname;
+
+        var rawUrl = buildRawUrl(currentPath);
+        var sourceUrl = buildSourceUrl(currentPath);
+
+        if (!rawUrl) {
+          showError(
+            "Invalid URL",
+            "Could not parse path: <code>" +
+              escapeHtml(currentPath) +
+              "</code>",
+          );
+          return;
+        }
+
+        try {
+          // Fetch raw markdown via the proxy
+          var proxyUrl =
+            window.location.origin + "/proxy?api=" + encodeURIComponent(rawUrl);
+          var resp = await fetch(proxyUrl);
+          if (!resp.ok) {
+            showError(
+              "Failed to fetch markdown",
+              "HTTP " +
+                resp.status +
+                ' — <a href="' +
+                escapeHtml(rawUrl) +
+                '">' +
+                escapeHtml(rawUrl) +
+                "</a>",
+            );
+            return;
+          }
+          var mdText = await resp.text();
+
+          // Render markdown to HTML
+          mermaidCounter = 0;
+          var html = marked.parse(mdText, { renderer: renderer });
+
+          // Build page
+          var headerHtml = buildHeader(currentPath, sourceUrl, rawUrl);
+          document.getElementById("app").innerHTML =
+            '<div class="md-content">' +
+            headerHtml +
+            '<div class="md-body">' +
+            html +
+            "</div></div>";
+
+          // Initialize mermaid diagrams
+          try {
+            await mermaid.run({
+              nodes: document.querySelectorAll(".mermaid"),
+            });
+          } catch (e) {
+            console.warn("Mermaid render error:", e);
+          }
+        } catch (err) {
+          showError("Error", escapeHtml(err.message));
+        }
+      }
+
+      function buildHeader(path, sourceUrl, rawUrl) {
+        var fileName = path.split("/").pop();
+        var parts = path.split("/").filter(Boolean);
+        var breadcrumb =
+          parts.length >= 4
+            ? parts[0] +
+              "/" +
+              parts[1] +
+              (parts.length > 2 ? "@" + parts[2] : "")
+            : path;
+
+        var actionsHtml = "";
+        if (sourceUrl) {
+          actionsHtml +=
+            '<a href="' +
+            escapeHtml(sourceUrl) +
+            '" target="_blank" rel="noopener">\u21D7 Source</a>';
+        }
+        if (rawUrl) {
+          actionsHtml +=
+            '<a href="' +
+            escapeHtml(rawUrl) +
+            '" target="_blank" rel="noopener">\u27E8\u27E9 Raw</a>';
+        }
+
+        return (
+          '<div class="md-header">' +
+          '<div class="icon">\uD83D\uDCDD</div>' +
+          '<div class="info">' +
+          "<h1>" +
+          escapeHtml(fileName) +
+          "</h1>" +
+          '<div class="meta">' +
+          escapeHtml(breadcrumb) +
+          "</div>" +
+          "</div>" +
+          '<div class="actions">' +
+          actionsHtml +
+          "</div></div>"
+        );
+      }
+
+      function showError(title, message) {
+        document.getElementById("app").innerHTML =
+          '<div class="error-box">' +
+          "<h2>\u26A0 " +
+          title +
+          "</h2>" +
+          "<p>" +
+          message +
+          "</p></div>";
+      }
+
+      // Start
+      main();
+    </script>
+  </body>
+</html>
